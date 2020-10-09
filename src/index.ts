@@ -2,6 +2,7 @@ const puppeteer = require('puppeteer')
 const fs = require('fs');
 import { Command } from 'commander'
 import * as FileMan from "./filemanager"
+import { EpubAnalyzer }  from "./epubanalyzer"
 const program = new Command();
 
 let inputFile
@@ -16,6 +17,7 @@ console.log(program.opts())
 console.log('--- Epub to PDF conversion started')
 let file = new FileMan.default(program.file)
 file.extractZip()
-console.log(file.epubFile)
-console.log(file.directory)
-file.clearAll()
+let analyzer = new EpubAnalyzer(file.directory)
+analyzer.getPages().finally(() => {
+    file.clearAll()
+});

@@ -14,6 +14,7 @@ class FileManager {
 
     extractZip() {
         var zip = new zipManager.default(this.epubFile)
+        console.log("--- Extracting to " + this.directory)
         zip.extractAllTo(this.directory)
     }
 
