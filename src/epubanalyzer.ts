@@ -26,8 +26,8 @@ export class EpubAnalyzer {
         return opfRelPath
     }
 
-    async getPages(): Promise<any[]> {
-        let pages: any[] = []
+    async getPages(): Promise<string[]> {
+        let pages: string[] = []
         const opfRelPath = await this.getOpfFile();
 
         const opfFilePath = path.join(this.directory, opfRelPath)
@@ -49,4 +49,9 @@ export class EpubAnalyzer {
         console.log(pages)
         return pages
     }
+}
+
+export interface Bookmark {
+    name:string;
+    children: [Bookmark]
 }

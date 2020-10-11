@@ -1,8 +1,8 @@
 import *  as zipManager from "adm-zip"
 import *  as fs from "fs"
-import *  as path from "path"
+//import *  as path from "path"
 
-class FileManager {
+export class FileManager {
 
     epubFile: string
     directory: string
@@ -22,5 +22,3 @@ class FileManager {
         fs.rmdirSync(this.directory, { recursive: true })
     }
 }
-
-export default FileManager
