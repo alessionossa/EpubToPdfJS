@@ -19,9 +19,11 @@ console.log('--- Epub to PDF conversion started')
 let file = new FileManager(program.file)
 file.extractZip()
 let analyzer = new EpubAnalyzer(file.directory)
-analyzer.getPages().then((pages) => {
+analyzer.getPages().then(async (pages) => {
     const pdfGenerator = new PdfGenerator(pages, file.directory)
-    pdfGenerator.convertToPdf(1,1)
+    const viewPort = await analyzer.getViewPort(pages[0])
+    console.log(viewPort)
+    return pdfGenerator.convertToPdf(viewPort)
 }).finally(() => {
     file.clearAll()
 });

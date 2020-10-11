@@ -49,9 +49,30 @@ export class EpubAnalyzer {
         console.log(pages)
         return pages
     }
+
+    async getViewPort(page: string): Promise<ViewPort> {
+        const pageString = fs.readFileSync(page)
+        const pageContent = await xmlParser.parseStringPromise(pageString);
+        const viewportElem = pageContent.html.head[0].meta.find((node: any) => {
+            return node.$.name == 'viewport'
+        })
+
+        const content: string[] = viewportElem.$.content.split(',')
+        let viewport: any = {}
+        content.forEach(viewportComponent => {
+            const [name,  val] = viewportComponent.split('=')
+            viewport[name.trim()] = val.trim()
+        })
+        return viewport
+    }
 }
 
 export interface Bookmark {
     name:string;
     children: [Bookmark]
+}
+
+export interface ViewPort {
+    width: number | string;
+    height: number | string;
 }
