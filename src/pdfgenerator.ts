@@ -49,7 +49,7 @@ export class PdfGenerator {
             await pptPage.goto(absPagePath)
 
             const pdfPath = path.join('pdfs', path.basename(page).replace('.xhtml', '.pdf'))
-            //pptPage.emulateMediaType("print");
+            pptPage.emulateMediaType("print");
             const options: puppeteer.PDFOptions = {
                 path: pdfPath,
                 height: modViewPort.height.toString() + 'px',
