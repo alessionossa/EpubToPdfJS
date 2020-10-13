@@ -106,9 +106,11 @@ export class EpubAnalyzer {
     private parseEpubNav(root: cheerio.Root,list: cheerio.Cheerio): OutlineNode[] {
         let outlineNodes: OutlineNode[] = []
         list.each((index, element) => {
-            console.log(`Index ${index}`)
-            const node = root(element).find("a")
+            //console.log(`Index ${index}`)
+            const nodeElem = root(element).find("> a")[0]
+            const node = root(nodeElem)
             const title = node.text()
+            console.log(`Node title: ${title}`)
 
             const pageHref = node.attr("href")!
             const pageNumStr = /[a-zA-Z]([0-9]+)\.xhtml/g.exec(pageHref)

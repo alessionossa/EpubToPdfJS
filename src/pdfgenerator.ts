@@ -103,9 +103,13 @@ export class PdfGenerator {
         await outliner.loadDocument();
 
         this.addOutlinesNodes(outliner, nodes)
+
+        await outliner.saveTo('./outline.pdf');
     }
 
     private addOutlinesNodes(outliner: PDFOutliner, nodes: OutlineNode[], parent: PDFRef | null = null) {
+        console.log("\nOutlines Level:")
+        console.log(nodes)
         for (const node of nodes) {
             const bookmark = outliner.addBookmark(node.title, node.page, parent);
 
