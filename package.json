@@ -2,13 +2,16 @@
   "dependencies": {
     "@types/commander": "^2.12.2",
     "adm-zip": "^0.4.16",
+    "cheerio": "^1.0.0-rc.3",
     "commander": "^6.1.0",
     "pdf-lib": "^1.11.2",
+    "pdf-merger-js": "^3.0.5",
     "puppeteer": "^5.3.1",
     "xml2js": "^0.4.23"
   },
   "devDependencies": {
     "@types/adm-zip": "^0.4.33",
+    "@types/cheerio": "^0.22.22",
     "@types/puppeteer": "^3.0.2",
     "@types/xml2js": "^0.4.5",
     "ts-node": "^9.0.0",

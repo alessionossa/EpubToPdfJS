@@ -1,7 +1,9 @@
 import * as path from "path"
 import * as xmlParser from "xml2js";
 import * as fs from "fs";
+import cheerio from "cheerio"
 import * as util from "util"
+import { OutlineNode, ViewPort } from "./interfaces"
 
 export class EpubAnalyzer {
 
@@ -28,26 +30,36 @@ export class EpubAnalyzer {
 
     async getPages(): Promise<string[]> {
         let pages: string[] = []
-        const opfRelPath = await this.getOpfFile();
+        
+        const opfContent = await this.getOpfContent();
 
-        const opfFilePath = path.join(this.directory, opfRelPath)
+        const opfFilePath = path.join(this.directory, this.opfRelFile!)
         const opfDir = path.dirname(opfFilePath);
-        const opfString = fs.readFileSync(opfFilePath)
-        const opfContent = await xmlParser.parseStringPromise(opfString);
 
         const itemReferences = opfContent.package.spine[0].itemref;
         itemReferences.forEach((itemRef: any) => {
-            opfContent.package.manifest[0].item.find((element: any) => {
+            const foundElement = opfContent.package.manifest[0].item.find((element: any) => {
                 if (element.$.id == itemRef.$.idref) {
-                    const src = path.join(opfDir, element.$.href)
-                    pages.push(src)
+                    return true
                 }
             })
+            const src = path.join(opfDir, foundElement.$.href)
+            pages.push(src)
         });
 
         console.log("Found " + pages.length + " pages.")
         console.log(pages)
         return pages
+    }
+
+    private async getOpfContent(): Promise<any> {
+        const opfRelPath = await this.getOpfFile();
+
+        const opfFilePath = path.join(this.directory, opfRelPath)
+        const opfString = fs.readFileSync(opfFilePath)
+        const opfContent = await xmlParser.parseStringPromise(opfString);
+
+        return opfContent
     }
 
     async getViewPort(page: string): Promise<ViewPort> {
@@ -65,14 +77,57 @@ export class EpubAnalyzer {
         })
         return viewport
     }
-}
 
-export interface Bookmark {
-    name:string;
-    children: [Bookmark]
-}
 
-export interface ViewPort {
-    width: number | string;
-    height: number | string;
+    async extarctOutlines(): Promise<OutlineNode[]> {
+        let pages: string[] = []
+        
+        const opfContent = await this.getOpfContent();
+
+        const opfFilePath = path.join(this.directory, this.opfRelFile!)
+        const opfDir = path.dirname(opfFilePath);
+
+        
+        const navElem = opfContent.package.manifest[0].item.find((element: any) => {
+            if (element.$.properties !== undefined && element.$.properties == "nav") {
+                return true
+            }
+        });
+        const navSrc = path.join(opfDir, navElem.$.href)
+
+        const navString = fs.readFileSync(navSrc!)
+        const navContent = await cheerio.load(navString);
+        const navList = navContent("#toc").find("nav[epub\\:type='toc'] > ol").children("li")
+
+        const nodes = this.parseEpubNav(navContent, navList)
+        return nodes
+    }
+
+    private parseEpubNav(root: cheerio.Root,list: cheerio.Cheerio): OutlineNode[] {
+        let outlineNodes: OutlineNode[] = []
+        list.each((index, element) => {
+            console.log(`Index ${index}`)
+            const node = root(element).find("a")
+            const title = node.text()
+
+            const pageHref = node.attr("href")!
+            const pageNumStr = /[a-zA-Z]([0-9]+)\.xhtml/g.exec(pageHref)
+            const pageNumber = Number(pageNumStr![1])
+
+            const children = node.find("ol").children("li")
+            let childNodes: OutlineNode[] | undefined = undefined
+            if (children.length > 0) {
+                childNodes = this.parseEpubNav(root, children)
+            }
+
+            outlineNodes.push({
+                title: title,
+                page: pageNumber,
+                children: childNodes
+            })
+
+        })
+
+        return outlineNodes
+    }
 }

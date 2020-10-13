@@ -1,7 +1,8 @@
-import { PDFName, PDFDict, PDFString, PDFArray, PDFNull, PDFDocument, PDFPage, PDFRef, PDFNumber, PDFPageLeaf, error } from "pdf-lib";
+import { PDFName, PDFDict, PDFString, PDFArray, PDFNull, PDFDocument, PDFPage, PDFRef, PDFNumber, PDFPageLeaf } from "pdf-lib";
 import * as fs from "fs";
-import { exitOverride } from "commander";
 
+
+// Inspired by https://github.com/Hopding/pdf-lib/issues/127 (https://github.com/Hopding/pdf-lib/issues/127#issuecomment-641710694)
 export class PDFOutliner {
 
   pdfPath: string;
@@ -103,6 +104,26 @@ export class PDFOutliner {
     this.document!.context.assign(prevRef, parentObj!);
   }
 
+  private insertBookmark(parent: PDFDict, parentRef: PDFRef, childRef: PDFRef, bookData: ANPDFBookmark): PDFDict {
+    const lastRefObj = parent.get(PDFName.of("Last"))
+        
+    const newParent = this.appendChildBookmark(parent, childRef)
+
+    let lastRef: PDFRef | null
+    if (lastRefObj) {
+      lastRef = lastRefObj as PDFRef
+
+      this.updatePrevBookmark(lastRef, childRef)
+    } else { lastRef = null }
+
+    const outlineItem = this.createOutlineItem(bookData.title, parentRef, bookData.destPage,
+                                          { next: null, prev: lastRef });
+    
+    this.document!.context.assign(parentRef, newParent);
+
+    return outlineItem
+  }
+
   addBookmark(title: string, destPage: number, parent: PDFRef | null = null): PDFRef | undefined {
     console.log('Adding bookmark: ' + title)
     const outlinesObj = this.document!.catalog.get(PDFName.of("Outlines"));
@@ -125,31 +146,10 @@ export class PDFOutliner {
         const parentObj = this.document!.context.lookupMaybe(parent, PDFDict)
 
         if (parentObj) {
-          const lastRefObj = parentObj.get(PDFName.of("Last"))
-          const newParent = this.appendChildBookmark(parentObj, outlineItemRef)
-
-          let lastRef: PDFRef | null
-          if (lastRefObj) {
-            lastRef = lastRefObj as PDFRef
-
-            this.updatePrevBookmark(lastRef, outlineItemRef)
-          } else { lastRef = null }
-          outlineItem = this.createOutlineItem(title, outlinesDictRef, destPageRef,
-                                                { next: null, prev: lastRef });
-          
-          //this.document!.context.delete(parent)
-          this.document!.context.assign(parent, newParent);
+          outlineItem = this.insertBookmark(parentObj, parent, outlineItemRef, { title: title, destPage: destPageRef })
         }
       } else {
-        const lastRef = outlinesDictGet.get(PDFName.of("Last")) as PDFRef
-        
-        const newParent = this.appendChildBookmark(outlinesDictGet, outlineItemRef)
-
-        outlineItem = this.createOutlineItem(title, outlinesDictRef, destPageRef,
-                                              { next: null, prev: lastRef });
-
-        this.updatePrevBookmark(lastRef, outlineItemRef)
-        this.document!.context.assign(outlinesDictRef, newParent);
+        outlineItem = this.insertBookmark(outlinesDictGet, outlinesDictRef, outlineItemRef, { title: title, destPage: destPageRef})
       }
 
       this.document!.context.assign(outlineItemRef, outlineItem!);
@@ -160,6 +160,7 @@ export class PDFOutliner {
     }
   }
 
+  /*
   async sample() {
     const pageRefs = this.getPageRefs();
 
@@ -219,6 +220,7 @@ export class PDFOutliner {
 
     await this.saveTo('./with_outline.pdf');
   }
+  */
 
   async saveTo(path: string) {
     const pdfBytes = await this.document!.save();
@@ -227,18 +229,25 @@ export class PDFOutliner {
   }
 }
 
+interface ANPDFBookmark {
+    title: string;
+    destPage: PDFRef
+}
+
+/*
 (async () => {
-  /*
-  const outliner = new PDFOutliner("sample.pdf");
-  await outliner.loadDocument();
-  outliner.sample();*/
+  
+  //const outliner = new PDFOutliner("sample.pdf");
+  //await outliner.loadDocument();
+  //outliner.sample();
   
   
-  const modifier = new PDFOutliner("sample.pdf");
+  const modifier = new PDFOutliner("sample_no.pdf");
   await modifier.loadDocument();
-  const parent = modifier.addBookmark("Test add", 3, null);
-  const pchild = modifier.addBookmark("Test child", 4, parent);
+  const parent = modifier.addBookmark("Test add", 2, null);
+  const pchild = modifier.addBookmark("Test child", 3, parent);
+  const pchild2 = modifier.addBookmark("Test child 2", 4, parent);
   modifier.addBookmark("Test nipote", 4, pchild);
 
   await modifier.saveTo('./with_outline2.pdf');
-})()
+})() */

@@ -20,5 +20,6 @@ export class FileManager {
 
     clearAll() {
         fs.rmdirSync(this.directory, { recursive: true })
+        fs.rmdirSync('screens/', { recursive: true })
     }
 }

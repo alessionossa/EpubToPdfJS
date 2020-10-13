@@ -2,7 +2,10 @@
 import puppeteer from 'puppeteer'
 import *  as path from "path"
 import *  as fs from "fs"
-import { ViewPort } from './epubanalyzer';
+import PdfMerger from "pdf-merger-js"
+import { ViewPort, OutlineNode } from './interfaces';
+import { PDFOutliner } from './pdfoutline';
+import { PDFRef } from 'pdf-lib';
 
 export class PdfGenerator {
 
@@ -10,10 +13,13 @@ export class PdfGenerator {
     pdfPages: string[];
     directory: string;
 
+    finalPdf: string | null;
+
     constructor(markup_files: string[], directory: string) {
         this.pages = markup_files;
         this.directory = directory;
         this.pdfPages = [];
+        this.finalPdf = null
     }
 
     async convertToPdf(viewPort: ViewPort) {
@@ -34,10 +40,16 @@ export class PdfGenerator {
             fs.mkdirSync('pdfs');
         }
 
-        const modViewPort: ViewPort = {
-            width: Number(viewPort.width) + 2,
-            height: Number(viewPort.height) + 2
+        if(!fs.existsSync('screens/')) {
+            fs.mkdirSync('screens');
         }
+
+        let modViewPort: ViewPort = {
+            width: Number(viewPort.width),
+            height: Number(viewPort.height)
+        }
+        
+
 
         for (const page of this.pages) {
             console.log("Converting " + page)
@@ -45,11 +57,11 @@ export class PdfGenerator {
             
             let absPagePath = path.resolve(page);
             absPagePath = absPagePath.replace(/^\//g, 'file:///');
-            console.log(absPagePath)
+            //console.log(absPagePath)
             await pptPage.goto(absPagePath)
 
             const pdfPath = path.join('pdfs', path.basename(page).replace('.xhtml', '.pdf'))
-            pptPage.emulateMediaType("print");
+            //pptPage.emulateMediaType("screen");
             const options: puppeteer.PDFOptions = {
                 path: pdfPath,
                 height: modViewPort.height.toString() + 'px',
@@ -63,15 +75,43 @@ export class PdfGenerator {
                 printBackground: true
             }
 
-            console.log(options)
+            const screenPath = path.join('screens', path.basename(page).replace('.xhtml', '.png'))
+            await pptPage.screenshot({path: screenPath})
+            //console.log(options)
             await pptPage.pdf(options)
-
-            await pptPage.screenshot({path: path.basename(page).replace('.xhtml', '.png')})
-            
+            this.pdfPages.push(pdfPath)
         }
         await pptPage.close()
 
         console.log('---Alle pages converted')
         await browser.close()
+    }
+
+    async mergePdfs() {
+        const merger = new PdfMerger();
+
+        this.pdfPages.forEach((page) => {
+            merger.add(page, ['1']);
+        })
+
+        this.finalPdf = './merged.pdf'
+        await merger.save(this.finalPdf)
+    }
+
+    async addOutline(nodes: OutlineNode[]) {
+        const outliner = new PDFOutliner(this.finalPdf!)
+        await outliner.loadDocument();
+
+        this.addOutlinesNodes(outliner, nodes)
+    }
+
+    private addOutlinesNodes(outliner: PDFOutliner, nodes: OutlineNode[], parent: PDFRef | null = null) {
+        for (const node of nodes) {
+            const bookmark = outliner.addBookmark(node.title, node.page, parent);
+
+            if (node.children) {
+                this.addOutlinesNodes(outliner, node.children, bookmark);
+            }
+        }
     }
 }

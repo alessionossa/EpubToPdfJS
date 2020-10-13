@@ -23,7 +23,12 @@ analyzer.getPages().then(async (pages) => {
     const pdfGenerator = new PdfGenerator(pages, file.directory)
     const viewPort = await analyzer.getViewPort(pages[0])
     console.log(viewPort)
-    return pdfGenerator.convertToPdf(viewPort)
+    await pdfGenerator.convertToPdf(viewPort)
+    await pdfGenerator.mergePdfs()
+    const outlines = await analyzer.extarctOutlines()
+
+    await pdfGenerator.addOutline(outlines)
+
 }).finally(() => {
     file.clearAll()
 });
