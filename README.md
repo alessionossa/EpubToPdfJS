@@ -1,6 +1,6 @@
 # EpubToPdfJS
 
-A tool to convert pre-paginated ePub3 files to PDF (with outlines).
+A tool to convert pre-paginated ePub3 files to PDF (with outline).
 
 It is an adaptation to Node.JS from the original project [HAKSOAT/EpubToPdf](https://github.com/alessionossa/EpubToPdf), 
 then modified into [alessionossa/EpubToPdf](https://github.com/alessionossa/EpubToPdf), so that I can work with [Puppeteer](https://github.com/puppeteer/puppeteer)
