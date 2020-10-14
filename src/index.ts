@@ -4,9 +4,8 @@ import { Command } from 'commander'
 import { FileManager} from "./filemanager"
 import { EpubAnalyzer }  from "./epubanalyzer"
 import { PdfGenerator }  from "./pdfgenerator"
+import * as util from "util"
 const program = new Command();
-
-let inputFile
 
 program.version('0.1.0')
 program
@@ -14,7 +13,7 @@ program
 
 program.parse(process.argv)
 
-console.log(program.opts())
+//console.log(program.opts())
 console.log('--- Epub to PDF conversion started')
 let file = new FileManager(program.file)
 file.extractZip()
@@ -26,9 +25,11 @@ analyzer.getPages().then(async (pages) => {
     await pdfGenerator.convertToPdf(viewPort)
     await pdfGenerator.mergePdfs()
     const outlines = await analyzer.extarctOutlines()
-
+    console.log('---Extracted outlines')
+    //console.log(util.inspect(outlines, false, null))
     await pdfGenerator.addOutline(outlines)
 
 }).finally(() => {
+    console.log('---All done, cleanup...')
     file.clearAll()
 });

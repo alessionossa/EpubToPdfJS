@@ -96,6 +96,8 @@ export class PdfGenerator {
 
         this.finalPdf = './merged.pdf'
         await merger.save(this.finalPdf)
+        
+        console.log('---Merged PDFs')
     }
 
     async addOutline(nodes: OutlineNode[]) {
@@ -108,8 +110,8 @@ export class PdfGenerator {
     }
 
     private addOutlinesNodes(outliner: PDFOutliner, nodes: OutlineNode[], parent: PDFRef | null = null) {
-        console.log("\nOutlines Level:")
-        console.log(nodes)
+        //console.log("\nOutlines Level:")
+        //console.log(nodes)
         for (const node of nodes) {
             const bookmark = outliner.addBookmark(node.title, node.page, parent);
 

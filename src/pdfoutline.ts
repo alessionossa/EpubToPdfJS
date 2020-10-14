@@ -126,14 +126,13 @@ export class PDFOutliner {
 
   addBookmark(title: string, destPage: number, parent: PDFRef | null = null): PDFRef | undefined {
     destPage = destPage - 1
-    console.log('Adding bookmark: ' + title)
+    //console.log('Adding bookmark: ' + title)
     const outlinesObj = this.document!.catalog.get(PDFName.of("Outlines"));
 
     let outlinesDictRef: PDFRef
     if (!(outlinesObj instanceof PDFRef)) {
       outlinesDictRef = this.createOutlinesDict();
     } else {
-      console.log("Outline already present");
       outlinesDictRef = outlinesObj as PDFRef
     }
 

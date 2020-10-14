@@ -100,6 +100,7 @@ export class EpubAnalyzer {
         const navList = navContent("#toc").find("nav[epub\\:type='toc'] > ol").children("li")
 
         const nodes = this.parseEpubNav(navContent, navList)
+        
         return nodes
     }
 
@@ -107,8 +108,8 @@ export class EpubAnalyzer {
         let outlineNodes: OutlineNode[] = []
         list.each((index, element) => {
             //console.log(`Index ${index}`)
-            const nodeElem = root(element).find("> a")[0]
-            const node = root(nodeElem)
+            const nodeElem = root(element)
+            const node = root(nodeElem.find("> a")[0])
             const title = node.text()
             console.log(`Node title: ${title}`)
 
@@ -116,7 +117,7 @@ export class EpubAnalyzer {
             const pageNumStr = /[a-zA-Z]([0-9]+)\.xhtml/g.exec(pageHref)
             const pageNumber = Number(pageNumStr![1])
 
-            const children = node.find("ol").children("li")
+            const children = nodeElem.find("ol").children("li")
             let childNodes: OutlineNode[] | undefined = undefined
             if (children.length > 0) {
                 childNodes = this.parseEpubNav(root, children)
