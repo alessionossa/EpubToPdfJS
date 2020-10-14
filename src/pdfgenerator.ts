@@ -72,10 +72,14 @@ export class PdfGenerator {
                     left: 0,
                     right: 0
                 },
-                printBackground: true
+                printBackground: true,
+                pageRanges: '1'
             }
 
             const screenPath = path.join('screens', path.basename(page).replace('.xhtml', '.png'))
+
+            // We take a screenshot as suggested https://github.com/puppeteer/puppeteer/issues/422,  
+            //   the alternative is {waitUntil: 'networkidle0'}
             await pptPage.screenshot({path: screenPath})
             //console.log(options)
             await pptPage.pdf(options)
